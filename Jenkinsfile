@@ -102,40 +102,40 @@ pipeline {
 //             }
 //         }
 
-     stage('Build Docker Images') {
-                steps {
-                    script {
-                        sh "docker-compose -f ${composeFile} build"
-                        sh "docker tag haleemo/vprodb:latest ${registrydb}:V$BUILD_NUMBER"
-                        sh "docker tag haleemo/vproapp:latest ${registryapp}:V$BUILD_NUMBER"
+         stage('Build Docker Images') {
+                    steps {
+                        script {
+                            sh "docker-compose -f ${composeFile} build"
+                            sh "docker tag haleemo/vprodb:latest ${registrydb}:V$BUILD_NUMBER"
+                            sh "docker tag haleemo/vproapp:latest ${registryapp}:V$BUILD_NUMBER"
+                        }
+                    }
+                }
+
+        stage('Upload Docker Images') {
+            steps {
+                script {
+                    docker.withRegistry('', registryCredential) {
+                        registrydb.push("V$BUILD_NUMBER")
+                        registrydb.push('latest')
+                        registryapp.push("V$BUILD_NUMBER")
+                        registryapp.push('latest')
                     }
                 }
             }
-
-//         stage('Upload Docker Images') {
-//             steps {
-//                 script {
-//                     docker.withRegistry('', registryCredential) {
-//                         registrydb.push("V$BUILD_NUMBER")
-//                         registrydb.push('latest')
-//                         registryapp.push("V$BUILD_NUMBER")
-//                         registryapp.push('latest')
-//                     }
-//                 }
-//             }
-//         }
-        stage('Upload Docker Images') {
-           steps {
-               script {
-                   docker.withRegistry('', registryCredential) {
-                       dockerImage.push("${registrydb}:V$BUILD_NUMBER")
-                       dockerImage.push("${registrydb}:latest")
-                       dockerImage.push("${registryapp}:V$BUILD_NUMBER")
-                       dockerImage.push("${registryapp}:latest")
-                   }
-               }
-           }
         }
+//         stage('Upload Docker Images') {
+//            steps {
+//                script {
+//                    docker.withRegistry('', registryCredential) {
+//                        dockerImage.push("${registrydb}:V$BUILD_NUMBER")
+//                        dockerImage.push("${registrydb}:latest")
+//                        dockerImage.push("${registryapp}:V$BUILD_NUMBER")
+//                        dockerImage.push("${registryapp}:latest")
+//                    }
+//                }
+//            }
+//         }
 
         stage('Remove the unused DokerImage') {
           steps {

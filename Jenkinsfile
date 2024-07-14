@@ -13,6 +13,7 @@ pipeline {
       registrydb = "haleemo/vprodb"
       registryapp = "haleemo/vproapp"
       registryCredential = "dockerhub"
+      composeFile = "./docker-compose.yml"
 //         SLACK_CHANNEL = '#devops'
 //         SLACK_CREDENTIALS_ID = 'slacklogin'
 //         registryCredential = 'ecr:us-east-1:awscred'
@@ -101,54 +102,55 @@ pipeline {
 //             }
 //         }
 
-        stage('Build Docker db Image') {
-            steps {
-                script {
-                    dockerImagedb = docker.build(${registryadb} + ":V$BUILD_NUMBER")
-                }
-            }
-        }
-
-       stage('Build Docker app Image') {
-                   steps {
-                       script {
-                           dockerImageapp = docker.build(${registryapp} + ":V$BUILD_NUMBER")
-                       }
-                   }
-               }
-
-        stage('Upload Docker db Image') {
-            steps {
-                script {
-                    docker.withRegistry('', registryCredential) {
-                        dockerImagedb.push("V$BUILD_NUMBER")
-                        dockerImagedb.push('latest')
-                    }
-                }
-            }
-        }
-        stage('Upload Docker app Image') {
+     stage('Build Docker Images') {
                 steps {
                     script {
-                        docker.withRegistry('', registryCredential) {
-                            dockerImageapp.push("V$BUILD_NUMBER")
-                            dockerImageapp.push('latest')
-                        }
+                        sh "docker-compose -f ${composeFile} build"
+                        sh "docker tag haleemo/vprodb:latest ${registrydb}:V$BUILD_NUMBER"
+                        sh "docker tag haleemo/vproapp:latest ${registryapp}:V$BUILD_NUMBER"
                     }
                 }
             }
+
+//         stage('Upload Docker Images') {
+//             steps {
+//                 script {
+//                     docker.withRegistry('', registryCredential) {
+//                         registrydb.push("V$BUILD_NUMBER")
+//                         registrydb.push('latest')
+//                         registryapp.push("V$BUILD_NUMBER")
+//                         registryapp.push('latest')
+//                     }
+//                 }
+//             }
+//         }
+        stage('Upload Docker Images') {
+           steps {
+               script {
+                   docker.withRegistry('', registryCredential) {
+                       dockerImage.push("${registrydb}:V$BUILD_NUMBER")
+                       dockerImage.push("${registrydb}:latest")
+                       dockerImage.push("${registryapp}:V$BUILD_NUMBER")
+                       dockerImage.push("${registryapp}:latest")
+                   }
+               }
+           }
+        }
 
         stage('Remove the unused DokerImage') {
           steps {
-            sh "docker rmi ${registry}:V$BUILD_NUMBER"
+            sh "docker system prune -af"
           }
         }
 
         stage('Kubernetes deploy') {
           agent {label 'KOPS'}
             steps {
-              sh "helm upgrade --install --force vprofile-stack helm/vprofilecharts --set appimage=${registry}:V${BUILD_NUMBER} --namespace prod"
-          }
+              sh "helm upgrade --install --force vprofile-stack helm/vprofilecharts \
+                  --set dbimage=${registrydb}:V${BUILD_NUMBER} \
+                  --set appimage=${registryapp}:V${BUILD_NUMBER} \
+                  --namespace prod"
+              }
         }
     }
 

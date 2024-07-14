@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: vprodb
-        image: {{ .values.dbimage }}
+        image: {{ .Values.dbimage }}
         ports:
         - name: vprodb-port
           containerPort: 3306

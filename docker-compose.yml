@@ -2,7 +2,7 @@ version: '3.8'
 services:
   vprodb:
     build:
-      context: ./Docker-db/Dockerfile
+      context: ./Docker-db/
     image: haleemo/vprodb
     ports:
       - "3306:3306"
@@ -27,7 +27,7 @@ services:
 
   vproapp:
     build:
-      context: ./Docker-app/Dockerfile
+      context: ./Docker-app/
     image: haleemo/vproapp
     ports:
       - "8080:8080"

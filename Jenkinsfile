@@ -113,16 +113,16 @@ pipeline {
                 }
 
         stage('Upload Docker Images') {
-            steps {
-                script {
-                    docker.withRegistry('', registryCredential) {
-                        registrydb.push("V$BUILD_NUMBER")
-                        registrydb.push('latest')
-                        registryapp.push("V$BUILD_NUMBER")
-                        registryapp.push('latest')
-                    }
-                }
-            }
+           steps {
+               script {
+                   docker.withRegistry('', registryCredential) {
+                       docker.image(registrydb).push("V${BUILD_NUMBER}")
+                       docker.image(registrydb).push('latest')
+                       docker.image(registryapp).push("V${BUILD_NUMBER}")
+                       docker.image(registryapp).push('latest')
+                   }
+               }
+           }
         }
 //         stage('Upload Docker Images') {
 //            steps {
